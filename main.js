@@ -9,11 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const selenium_webdriver_1 = require("selenium-webdriver");
+const chrome = require("selenium-webdriver/chrome");
 /**
  * main 入口
  *
  * 测试!
  */
+let game_id_map = new Map();
 function selectOption(driver, selector, item) {
     let selectList = driver.findElement(selector);
     selectList.click();
@@ -22,7 +24,6 @@ function selectOption(driver, selector, item) {
         let options_promises = options.map(option => {
             return option.getAttribute("value")
                 .then(text => {
-                console.log(text);
                 if (item == text)
                     option.click();
             });
@@ -35,8 +36,10 @@ function main() {
         console.log('ts hello world');
         const driver = new selenium_webdriver_1.Builder()
             .forBrowser('chrome')
+            .setChromeOptions(new chrome.Options()
+            .setMobileEmulation({ deviceName: 'Pixel 2' }))
             .build();
-        Promise.all([
+        return Promise.all([
             driver.get('http://103.230.243.68:11898/page/ares_game.htm'),
             driver.findElement(selenium_webdriver_1.By.id('user_id'))
                 .then(e => {
@@ -62,7 +65,19 @@ function main() {
                 e.click();
             })
                 .catch(() => console.error('find btn-login-game error'));
-        });
+        }).then(() => __awaiter(this, void 0, void 0, function* () {
+            // await new Promise(resolve => setTimeout(resolve, 1000));
+            yield driver.sleep(1000);
+            return driver.getAllWindowHandles()
+                .then(handles => {
+                driver.switchTo().window(handles[1]);
+            });
+        })).then(() => {
+            return driver.wait(() => {
+                return driver.executeScript("return ares && ares.socket.sock && ares.socket.sock.readyState == WebSocket.OPEN");
+            }, 50000)
+                .then(() => console.log('find Cocos2dGameContainer !!'));
+        }).then(() => driver.close());
     });
 }
-main().catch(() => console.log('something error'));
+main().catch((e) => console.log('something error', e));

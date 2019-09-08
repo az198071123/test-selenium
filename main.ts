@@ -1,9 +1,11 @@
 import { Builder, By, ThenableWebDriver } from 'selenium-webdriver';
+import * as chrome from 'selenium-webdriver/chrome';
 /**
  * main 入口
  * 
  * 测试!
  */
+let game_id_map = new Map<number, string>();
 function selectOption(driver: ThenableWebDriver, selector: By, item: string) {
     let selectList = driver.findElement(selector);
     selectList.click();
@@ -12,7 +14,6 @@ function selectOption(driver: ThenableWebDriver, selector: By, item: string) {
             let options_promises = options.map(option => {
                 return option.getAttribute("value")
                     .then(text => {
-                        console.log(text);
                         if (item == text) option.click();
                     });
             });
@@ -24,9 +25,11 @@ async function main() {
 
     const driver = new Builder()
         .forBrowser('chrome')
+        .setChromeOptions(new chrome.Options()
+            .setMobileEmulation({ deviceName: 'Pixel 2' }))
         .build();
 
-    Promise.all([
+    return Promise.all([
         driver.get('http://103.230.243.68:11898/page/ares_game.htm'),
         driver.findElement(By.id('user_id'))
             .then(e => {
@@ -52,7 +55,19 @@ async function main() {
                 e.click();
             })
             .catch(() => console.error('find btn-login-game error'))
-    });
+    }).then(async () => {
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+        await driver.sleep(1000);
+        return driver.getAllWindowHandles()
+            .then(handles => {
+                driver.switchTo().window(handles[1]);
+            })
+    }).then(() => {
+        return driver.wait(() => {
+            return driver.executeScript("return ares && ares.socket.sock && ares.socket.sock.readyState == WebSocket.OPEN")
+        }, 50000)
+            .then(() => console.log('find Cocos2dGameContainer !!'));
+    }).then(() => driver.close());
 }
 
-main().catch(() => console.log('something error'));
+main().catch((e) => console.log('something error', e));
