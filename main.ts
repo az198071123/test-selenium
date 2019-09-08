@@ -4,32 +4,19 @@ import { Builder, By, ThenableWebDriver } from 'selenium-webdriver';
  * 
  * 测试!
  */
-async function selectOption(driver: ThenableWebDriver, selector: By, item: string) {
+function selectOption(driver: ThenableWebDriver, selector: By, item: string) {
     let selectList = driver.findElement(selector);
     selectList.click();
-    await selectList.findElements(By.tagName('option'))
-        .then(async (options) => {
-            console.log('0');
-            for (let index = 0; index < options.length; index++) {
-                const option = options[index];
-                console.log('1');
-                let find = false;
-                await option.getAttribute("value")
-                    .then((text) => {
-                        console.log('2');
-                        if (item === text) {
-                            console.log('3');
-                            option.click();
-                            find = true;
-                        }
+    return selectList.findElements(By.tagName('option'))
+        .then(options => {
+            let options_promises = options.map(option => {
+                return option.getAttribute("value")
+                    .then(text => {
+                        if (item == text) option.click();
                     });
-                if (find) break;
-            }
+            });
+            return Promise.all(options_promises);
         })
-        .then(() => {
-            console.log('4');
-        })
-    console.log('5');
 }
 async function main() {
     console.log('ts hello world');
@@ -39,35 +26,39 @@ async function main() {
         .build();
 
     await driver.get('http://103.230.243.68:11898/page/ares_game.htm')
-
-    await driver.findElement(By.id('user_id'))
-        .then(e => {
-            e.clear();
-            e.sendKeys('test111');
+        .then(() => {
+            return driver.findElement(By.id('user_id'))
+                .then(e => {
+                    e.clear();
+                    e.sendKeys('test111');
+                })
+                .catch(() => console.error('find gold_id error'));
         })
-        .catch(() => console.error('find gold_id error'));
-
-
-    await driver.findElement(By.id('gold_id'))
-        .then(e => {
-            e.clear();
-            e.sendKeys('10000');
+        .then(() => {
+            return driver.findElement(By.id('gold_id'))
+                .then(e => {
+                    e.clear();
+                    e.sendKeys('10000');
+                })
+                .catch(() => console.error('find user_id error'));
         })
-        .catch(() => console.error('find user_id error'));
-
-    await selectOption(driver, By.id('game_id'), '5503');
-
-    await driver.findElement(By.id('kind_h'))
-        .then(e => {
-            e.click();
+        .then(() => {
+            return selectOption(driver, By.id('game_id'), '5503');
         })
-        .catch(() => console.error('find kind_h error'));
-
-    await driver.findElement(By.className('btn-login-game'))
-        .then(e => {
-            e.click();
+        .then(() => {
+            return driver.findElement(By.id('kind_h'))
+                .then(e => {
+                    e.click();
+                })
+                .catch(() => console.error('find kind_h error'));
         })
-        .catch(() => console.error('find btn-login-game error'));
+        .then(() => {
+            return driver.findElement(By.className('btn-login-game'))
+                .then(e => {
+                    e.click();
+                })
+                .catch(() => console.error('find btn-login-game error'));
+        }).catch(() => console.log('something error'))
 }
 
-main();
+main().catch(() => console.log('something error'));
