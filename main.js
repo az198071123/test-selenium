@@ -36,40 +36,33 @@ function main() {
         const driver = new selenium_webdriver_1.Builder()
             .forBrowser('chrome')
             .build();
-        yield driver.get('http://103.230.243.68:11898/page/ares_game.htm')
-            .then(() => {
-            return driver.findElement(selenium_webdriver_1.By.id('user_id'))
+        Promise.all([
+            driver.get('http://103.230.243.68:11898/page/ares_game.htm'),
+            driver.findElement(selenium_webdriver_1.By.id('user_id'))
                 .then(e => {
                 e.clear();
                 e.sendKeys('test111');
             })
-                .catch(() => console.error('find gold_id error'));
-        })
-            .then(() => {
-            return driver.findElement(selenium_webdriver_1.By.id('gold_id'))
+                .catch(() => console.error('find gold_id error')),
+            driver.findElement(selenium_webdriver_1.By.id('gold_id'))
                 .then(e => {
                 e.clear();
                 e.sendKeys('10000');
             })
-                .catch(() => console.error('find user_id error'));
-        })
-            .then(() => {
-            return selectOption(driver, selenium_webdriver_1.By.id('game_id'), '5503');
-        })
-            .then(() => {
-            return driver.findElement(selenium_webdriver_1.By.id('kind_h'))
+                .catch(() => console.error('find user_id error')),
+            selectOption(driver, selenium_webdriver_1.By.id('game_id'), '5503'),
+            driver.findElement(selenium_webdriver_1.By.id('kind_h'))
                 .then(e => {
                 e.click();
             })
-                .catch(() => console.error('find kind_h error'));
-        })
-            .then(() => {
+                .catch(() => console.error('find kind_h error')),
+        ]).then(() => {
             return driver.findElement(selenium_webdriver_1.By.className('btn-login-game'))
                 .then(e => {
                 e.click();
             })
                 .catch(() => console.error('find btn-login-game error'));
-        }).catch(() => console.log('something error'));
+        });
     });
 }
 main().catch(() => console.log('something error'));
